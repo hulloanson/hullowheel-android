@@ -90,11 +90,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     return compressed
   }
 
-  private fun prefixSize(raw: ByteArray): ByteArray {
-      System.out.println("output size: ${raw.size.toByte()}")
-      return byteArrayOf(raw.size.toByte()).plus(raw)
-  }
-
   private fun startSending(): Job {
     sock = DatagramSocket()
     return GlobalScope.launch {
