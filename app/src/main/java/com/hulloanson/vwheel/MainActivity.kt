@@ -219,9 +219,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
   }
 
   private fun accelToXRotation(x: Float, y: Float): Float {
-    return Math.abs(
-            Math.atan2(x.toDouble(), y.toDouble()) / (Math.PI/180)
-    ).toFloat()
+    val rotation = Math.atan2(x.toDouble(), y.toDouble()) / (Math.PI/180)
+    if (rotation <= -140 && rotation >= -180) return (180 * 2 - rotation).toFloat()
+    if (rotation < -40) return 90.0f
+    return rotation.toFloat()
   }
 
   /* Lifecycle functions */
