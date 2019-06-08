@@ -12,7 +12,7 @@ This is super-alpha. You will need to build it yourself for now. No APKs now I'm
 ## Run
 1. Start the app
 2. Start the server
-3. If no inputs was received, try stopping both the app and the server, then start the app, then the server. It is due to my negligence on UDP. See issue below and also https://github.com/hulloanson/hullowheel-server/#known-issues.
+3. If no inputs was received, try stopping both the app and the server, then start the app, then the server. It is due to my ignorance on UDP. See issue below and also https://github.com/hulloanson/hullowheel-server/#known-issues.
 
 ## TODOs
 ### Known Issues & Improvements
