@@ -2,6 +2,7 @@ package com.hulloanson.vwheel
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -258,11 +259,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
           }, 1000)
       }
     }
-//    window.decorView.apply {
-//      systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-//      setOnSystemUiVisibilityChangeListener { visibility ->
-//      }
-//    }
   }
 
   override fun onPause() {
@@ -288,19 +284,5 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
   }
 
   /* Sensor callbacks end */
-
-}
-
-class SeekBarChangedListener: SeekBar.OnSeekBarChangeListener {
-  override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-  }
-
-  override fun onStartTrackingTouch(p0: SeekBar?) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun onStopTrackingTouch(p0: SeekBar?) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
 
 }
