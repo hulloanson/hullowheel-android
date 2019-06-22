@@ -7,10 +7,10 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.support.constraint.ConstraintLayout
-import android.support.v4.view.ViewCompat
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
 import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -90,16 +90,21 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     return compressed
   }
 
+  private fun connect() {
+    sock!!.connect(getInetAddress(), 20000);
+  }
+
   private fun startSending(): Job {
     sock = DatagramSocket()
     return GlobalScope.launch {
-      sock!!.connect(getInetAddress(), 20000)
+        connect()
       while (send) {
         try {
           val compressedState = compress(readStateAsync().await())
           sock!!.send(DatagramPacket(compressedState, compressedState.size))
         } catch (e: IOException) {
-
+          connect()
+            continue
         }
         delay(50)
       }
