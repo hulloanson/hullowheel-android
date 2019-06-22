@@ -2,7 +2,6 @@ package com.hulloanson.vwheel
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -17,10 +16,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import com.bosphere.verticalslider.VerticalSlider
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -49,8 +46,12 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
   private val COL_COUNT = 6
 
+  private lateinit var address: String
+
+  private var port: Int = 0
+
   private fun getInetAddress(): InetAddress {
-    return InetAddress.getByAddress(byteArrayOf(192.toByte(), 168.toByte(), 43.toByte(), 66.toByte()))
+    return InetAddress.getByName(address)
   }
 
   private fun initStore() {
@@ -95,7 +96,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
   }
 
   private fun connect() {
-    sock!!.connect(getInetAddress(), 20000);
+    sock!!.connect(getInetAddress(), port)
   }
 
   private fun startSending(): Job {
@@ -238,6 +239,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    address = intent.getStringExtra("address")
+    port = intent.getIntExtra("port", 0)
     setContentView(R.layout.activity_main)
     constructView()
   }

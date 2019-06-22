@@ -5,11 +5,11 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
-import com.google.android.material.snackbar.Snackbar
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity;
 
-import kotlinx.android.synthetic.main.activity_settings.*
 import java.lang.NullPointerException
+import java.net.MalformedURLException
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -31,10 +31,13 @@ class SettingsActivity : AppCompatActivity() {
         if (item == null) return true
         if (item.itemId == R.id.action_start) {
             // Get set address
-            val address = PreferenceManager.getDefaultSharedPreferences(this).getString("address", null)
+            val addressStr = PreferenceManager.getDefaultSharedPreferences(this).getString("address", null)
                     ?: throw NullPointerException("unexpected: address is null")
+            val address = parseHost(addressStr)
+            val port = parsePort(addressStr)
             startActivity(Intent(this, MainActivity::class.java).apply {
                 putExtra("address", address)
+                putExtra("port", port)
             })
         }
         return false
