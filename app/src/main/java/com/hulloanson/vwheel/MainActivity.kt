@@ -9,11 +9,14 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.SeekBar
@@ -238,9 +241,28 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     constructView()
   }
 
+  private fun setImmersiveFullscreen() {
+    window.decorView.apply {
+      systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE
+    }
+  }
+
   override fun onResume() {
     super.onResume()
     start()
+    setImmersiveFullscreen()
+    window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
+      if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
+          Handler().postDelayed({
+            setImmersiveFullscreen()
+          }, 1000)
+      }
+    }
+//    window.decorView.apply {
+//      systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//      setOnSystemUiVisibilityChangeListener { visibility ->
+//      }
+//    }
   }
 
   override fun onPause() {
