@@ -1,4 +1,4 @@
-package com.hulloanson.vwheel
+package com.hulloanson.hullowheel
 
 import android.content.res.Configuration
 import android.os.Bundle

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.hulloanson.vwheel">
+    package="com.hulloanson.hullowheel">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -14,16 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
         <activity
-            android:name=".MainActivity"
+            android:name="com.hulloanson.hullowheel.MainActivity"
             android:configChanges="orientation"
-            android:parentActivityName=".SettingsActivity"
+            android:parentActivityName="com.hulloanson.hullowheel.SettingsActivity"
             android:screenOrientation="landscape">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.hulloanson.vwheel.SettingsActivity" />
+                android:value="com.hulloanson.hullowheel.SettingsActivity" />
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.hulloanson.hullowheel.SettingsActivity"
             android:label="@string/title_activity_settings"
             android:theme="@style/AppTheme">
             <intent-filter>

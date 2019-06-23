@@ -1,7 +1,5 @@
-package com.hulloanson.vwheel
+package com.hulloanson.hullowheel
 
-import java.net.InetAddress
-import java.net.MalformedURLException
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 

@@ -1,4 +1,4 @@
-package com.hulloanson.vwheel
+package com.hulloanson.hullowheel
 
 import org.junit.Test
 
