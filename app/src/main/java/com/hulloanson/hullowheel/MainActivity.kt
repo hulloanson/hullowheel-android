@@ -18,6 +18,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.Space
 import com.bosphere.verticalslider.VerticalSlider
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -155,9 +156,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
   @SuppressLint("ClickableViewAccessibility")
   private fun constructVerticalBar(offset: Int): LinearLayout {
     val container = LinearLayout(this)
+    container.orientation = LinearLayout.VERTICAL
     val bar = VerticalSlider(this)
     bar.rotation = 180.0f
-    bar.setPadding(50, 50, 50 , 50)
     bar.setOnSliderProgressChangeListener { progress ->
       writeStateAsync(offset, *floatToBytes(progress * 1000))
     }
@@ -168,7 +169,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
       }
       false
     }
-    container.addView(bar, MATCH_PARENT, MATCH_PARENT)
+    val barParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 1.0f)
+    container.addView(Space(this), LinearLayout.LayoutParams(MATCH_PARENT, 20, 0.0f))
+    container.addView(bar, barParams)
+    container.addView(Space(this), LinearLayout.LayoutParams(MATCH_PARENT, 70, 0.0f))
     return container
   }
 
@@ -179,7 +183,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     val buttonPadParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1.0f)
     container.addView(constructButtonPad(), buttonPadParams)
 
-    val pedalParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1.0f)
+    val pedalParams = LinearLayout.LayoutParams(200, MATCH_PARENT, 0.0f)
     // Brake
     container.addView(constructVerticalBar(8), pedalParams)
     // Gas
