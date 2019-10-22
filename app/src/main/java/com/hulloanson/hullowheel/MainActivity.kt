@@ -25,14 +25,22 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.lang.NullPointerException
 import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPOutputStream
 
-class MainActivity : AppCompatActivity(), SensorEventListener {
-  private var sock: DatagramSocket? = null
+object Sender {
+  private lateinit var sock: DatagramSocket
 
+  fun send(bytes: ByteArray, dstAddress: InetAddress, dstPort: Int = 20000) {
+    if (!::sock.isInitialized || sock.isClosed) sock = DatagramSocket()
+    sock.send(DatagramPacket(bytes, bytes.size, dstAddress, dstPort))
+  }
+}
+
+class MainActivity : AppCompatActivity(), SensorEventListener {
   private lateinit var states: ByteArray
 
   private lateinit var mutex: Mutex
@@ -96,27 +104,18 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     return compressed
   }
 
-  private fun connect() {
-    sock!!.connect(getInetAddress(), port)
-  }
-
   private fun startSending(): Job {
-    sock = DatagramSocket()
     return GlobalScope.launch {
-        connect()
       while (send) {
         try {
           val compressedState = compress(readStateAsync().await())
-          sock!!.send(DatagramPacket(compressedState, compressedState.size))
+            Sender.send(compressedState, getInetAddress())
         } catch (e: IOException) {
-          connect()
             continue
         }
         delay(50)
       }
-      System.out.println("Stopped sending")
-      sock!!.disconnect()
-      sock = null
+      println("Stopped sending")
     }
   }
 
@@ -172,7 +171,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     val barParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 1.0f)
     container.addView(Space(this), LinearLayout.LayoutParams(MATCH_PARENT, 20, 0.0f))
     container.addView(bar, barParams)
-    container.addView(Space(this), LinearLayout.LayoutParams(MATCH_PARENT, 70, 0.0f))
+    container.addView(Space(this), LinearLayout.LayoutParams(MATCH_PARENT, 50, 0.0f))
     return container
   }
 
