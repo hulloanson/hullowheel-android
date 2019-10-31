@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.lang.NullPointerException
+import java.lang.Exception
 import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -36,8 +36,20 @@ object Sender {
   private lateinit var sock: DatagramSocket
 
   fun send(bytes: ByteArray, dstAddress: InetAddress, dstPort: Int = 20000) {
-    if (!::sock.isInitialized || sock.isClosed) sock = DatagramSocket()
-    sock.send(DatagramPacket(bytes, bytes.size, dstAddress, dstPort))
+    try {
+      if (!::sock.isInitialized || sock.isClosed) {
+        sock = DatagramSocket()
+      }
+      sock.send(DatagramPacket(bytes, bytes.size, dstAddress, dstPort))
+      // TODO: catch these errors and give appropriate responses
+    } catch (e: SecurityException) {
+      // Possible reasons
+      throw e
+    } catch (e: SocketException) {
+      throw e
+    } catch (e: Exception) {
+      throw e
+    }
   }
 }
 
