@@ -16,6 +16,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Space
@@ -217,12 +218,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
   }
 
   private fun start() {
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     initStore()
     startSending()
     listenToGyro()
   }
 
   private fun cleanUp() {
+    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     stopListeningToGyro()
     stopSending()
   }
