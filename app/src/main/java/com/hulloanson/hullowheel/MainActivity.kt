@@ -10,6 +10,7 @@ import android.hardware.SensorManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import android.view.MotionEvent
@@ -27,10 +28,15 @@ import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.lang.Exception
+import java.lang.Math.PI
 import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPOutputStream
+import kotlin.math.atan2
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 
 object Sender {
   private lateinit var sock: DatagramSocket
@@ -43,7 +49,7 @@ object Sender {
       sock.send(DatagramPacket(bytes, bytes.size, dstAddress, dstPort))
       // TODO: catch these errors and give appropriate responses
     } catch (e: SecurityException) {
-      // Possible reasons
+      // Possible reasons // TODO: what?
       throw e
     } catch (e: SocketException) {
       throw e
@@ -53,10 +59,12 @@ object Sender {
   }
 }
 
-class MainActivity : AppCompatActivity(), SensorEventListener {
-  private lateinit var states: ByteArray
+class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { return 0 })) : AppCompatActivity(), SensorEventListener {
+  private var wheel: Short = 0
 
-  private lateinit var mutex: Mutex
+  private var gas: Byte = 0
+
+  private var brake: Byte = 0
 
   private lateinit var sensorManager: SensorManager
 
@@ -76,53 +84,35 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     return InetAddress.getByName(address)
   }
 
-  private fun initStore() {
-    states = ByteArray(36, fun(_): Byte { return 0 })
-    mutex = Mutex()
-  }
-
-  private fun readStateAsync(): Deferred<ByteArray> {
-    return GlobalScope.async {
-      mutex.withLock {
-        states.clone()
+  private fun packStates(): ByteArray {
+    val buf = ByteBuffer.allocate(
+            Short.SIZE_BYTES // wheel
+                    + Byte.SIZE_BYTES * 2 // gas and brake
+                    + 3 // 24 bits / 8
+    )
+    buf.order(ByteOrder.LITTLE_ENDIAN)
+    buf.putShort(0, wheel)
+    buf.put(2, gas)
+    buf.put(3, brake)
+    var btnOffset = 0
+    while (btnOffset < 3) {
+      var i = 0
+      var n = 0
+      while (i < 8) {
+        n = n or (btns[btnOffset * 8 + i] shl i)
+        i++
       }
+      buf.put(4 + btnOffset, n.toByte())
+      btnOffset++
     }
-  }
-
-  private fun writeStateAsync(position: Int, vararg values: Byte) {
-    GlobalScope.async {
-      mutex.withLock {
-        for ((index, value) in values.withIndex()) {
-            states[position + index] = value
-        }
-      }
-    }
-  }
-
-  private fun writeStateAsync(position: Int, value: Byte) {
-    GlobalScope.async {
-      mutex.withLock {
-        states[position] = value
-      }
-    }
-  }
-
-  private fun compress(raw: ByteArray) : ByteArray {
-    val bStream = ByteArrayOutputStream(raw.size)
-    val gStream = GZIPOutputStream(bStream)
-    gStream.write(raw)
-    gStream.close()
-    val compressed = bStream.toByteArray()
-    bStream.reset()
-    return compressed
+    return buf.array()
   }
 
   private fun startSending(): Job {
     return GlobalScope.launch {
       while (send) {
         try {
-          val compressedState = compress(readStateAsync().await())
-            Sender.send(compressedState, getInetAddress())
+            Sender.send(packStates(), getInetAddress())
         } catch (e: IOException) {
             continue
         }
@@ -166,18 +156,16 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  private fun constructVerticalBar(offset: Int): LinearLayout {
+  private fun constructVerticalBar(setValue: (Byte) -> Unit): LinearLayout {
     val container = LinearLayout(this)
     container.orientation = LinearLayout.VERTICAL
     val bar = VerticalSlider(this)
     bar.rotation = 180.0f
-    bar.setOnSliderProgressChangeListener { progress ->
-      writeStateAsync(offset, *floatToBytes(progress * 1000))
-    }
+    bar.setOnSliderProgressChangeListener { progress -> setValue((progress * 120).toByte()) }
     bar.setOnTouchListener { _, motionEvent ->
       if (motionEvent.action == MotionEvent.ACTION_UP) {
         bar.setProgress(0.0f)
-        writeStateAsync(offset, *floatToBytes(0.0f))
+        setValue(0)
       }
       false
     }
@@ -197,9 +185,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     val pedalParams = LinearLayout.LayoutParams(200, MATCH_PARENT, 0.0f)
     // Brake
-    container.addView(constructVerticalBar(8), pedalParams)
+    container.addView(constructVerticalBar{ v -> brake = v }, pedalParams)
     // Gas
-    container.addView(constructVerticalBar(4), pedalParams)
+    container.addView(constructVerticalBar{ v -> gas = v }, pedalParams)
 
     addContentView(container, ConstraintLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
   }
@@ -219,9 +207,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     button.setOnTouchListener { _, event: MotionEvent ->
       GlobalScope.launch {
         if (event.action == MotionEvent.ACTION_DOWN) {
-          writeStateAsync(buttId + 12, 1)
+          btns[buttId] = 1
         } else if (event.action == MotionEvent.ACTION_UP) {
-          writeStateAsync(buttId + 12, 0)
+          btns[buttId] = 0
         }
       }
       true
@@ -231,7 +219,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
   private fun start() {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-    initStore()
     startSending()
     listenToGyro()
   }
@@ -242,18 +229,25 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     stopSending()
   }
 
-  private fun floatToBytes(f: Float): ByteArray {
-    return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(f).array()
+  private fun accelToXRotation(x: Float, y: Float): Short {
+    var r = atan2(x.toDouble(), y.toDouble()) / (PI /180)
+    Log.d("accelToXRotation", "raw rotation is $r")
+    if (r in 90.0..180.0) {
+      r = 90 - r
+    } else if (r in -180.0..-90.0) {
+      r = -270 - r
+    } else if (r < 90 && r >= 0) {
+      r = 90 - r
+    } else if (r < 0 && r > -90) {
+      r = 90 - r
+    }
+    r = min(r, 150.0)
+    r = max(r, -150.0)
+    Log.d("accelToXRotation", "normalized rotation is $r")
+    return r.toShort()
   }
 
-  private fun accelToXRotation(x: Float, y: Float): Float {
-    val rotation = Math.atan2(x.toDouble(), y.toDouble()) / (Math.PI/180)
-    if (rotation <= -140 && rotation >= -180) return (180 * 2 - rotation).toFloat()
-    if (rotation < -40) return 90.0f
-    return rotation.toFloat()
-  }
-
-  /* Lifecycle functions */
+  /** Lifecycle functions **/
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -287,9 +281,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     cleanUp()
   }
 
-  /* Lifecycle functions end*/
+  /** Lifecycle functions end **/
 
-  /* Sensor callbacks */
+  /** Sensor callbacks **/
 
   override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
 
@@ -301,9 +295,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     val x = e.values?.get(0)
     val y = e.values?.get(1)
     if (x == null || y == null) return
-    writeStateAsync(0, *floatToBytes(accelToXRotation(x, y)))
+    wheel = accelToXRotation(x, y)
   }
 
-  /* Sensor callbacks end */
+  /** Sensor callbacks end **/
 
 }

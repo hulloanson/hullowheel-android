@@ -5,16 +5,16 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    signingConfigs {
-        release {
-            Properties properties = new Properties()
-            properties.load(project.rootProject.file('local.properties').newDataInputStream())
-            keyAlias properties.getProperty('keyAlias')
-            keyPassword properties.getProperty('keyPassword')
-            storeFile file(properties.getProperty('storeFile'))
-            storePassword properties.getProperty('storePassword')
-        }
-    }
+//    signingConfigs {
+//        release {
+//            Properties properties = new Properties()
+//            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+//            keyAlias properties.getProperty('keyAlias')
+//            keyPassword properties.getProperty('keyPassword')
+//            storeFile file(properties.getProperty('storeFile'))
+//            storePassword properties.getProperty('storePassword')
+//        }
+//    }
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.hulloanson.hullowheel"
@@ -31,7 +31,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable false
             jniDebuggable false
-            signingConfig signingConfigs.release
+//            signingConfig signingConfigs.release
             renderscriptDebuggable false
             pseudoLocalesEnabled false
             zipAlignEnabled true
