@@ -241,8 +241,7 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
     } else if (r < 0 && r > -90) {
       r = 90 - r
     }
-    r = min(r, 150.0)
-    r = max(r, -150.0)
+    r = max(min(r, 150.0), -150.0)
     Log.d("accelToXRotation", "normalized rotation is $r")
     return r.toShort()
   }
