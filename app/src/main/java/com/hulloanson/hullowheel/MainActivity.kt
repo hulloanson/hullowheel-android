@@ -32,6 +32,7 @@ import java.lang.Math.PI
 import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.*
 import java.util.zip.GZIPOutputStream
 import kotlin.math.atan2
 import kotlin.math.floor
@@ -59,7 +60,9 @@ object Sender {
   }
 }
 
-class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { return 0 })) : AppCompatActivity(), SensorEventListener {
+class MainActivity(
+        private var btns: Array<Int> = Array(24, fun (_): Int { return 0 }), private var btnsAutoRelease: Array<UUID?> = Array(24, fun(_): UUID? { return null }))
+  : AppCompatActivity(), SensorEventListener {
   private var wheel: Short = 0
 
   private var gas: Byte = 0
@@ -75,6 +78,8 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
   private val ROW_COUNT = 4
 
   private val COL_COUNT = 6
+
+  private val SAMPLING_INTERVAL : Long = 50 // ms
 
   private lateinit var address: String
 
@@ -112,11 +117,11 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
     return GlobalScope.launch {
       while (send) {
         try {
-            Sender.send(packStates(), getInetAddress())
+          Sender.send(packStates(), getInetAddress())
         } catch (e: IOException) {
-            continue
+          continue
         }
-        delay(50)
+        delay(SAMPLING_INTERVAL)
       }
       println("Stopped sending")
     }
@@ -133,7 +138,7 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
   }
 
   private fun stopSending() {
-      send = false
+    send = false
   }
 
   private fun constructButtonPad(): LinearLayout {
@@ -180,15 +185,21 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
     val container = LinearLayout(this)
     container.orientation = LinearLayout.HORIZONTAL
 
+//    container.addView(Space(this), LinearLayout.LayoutParams(100, MATCH_PARENT, 1.0f))
     val buttonPadParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1.0f)
     container.addView(constructButtonPad(), buttonPadParams)
 
+    container.addView(Space(this), LinearLayout.LayoutParams(50, MATCH_PARENT, 0.0f))
     val pedalParams = LinearLayout.LayoutParams(200, MATCH_PARENT, 0.0f)
     // Brake
     container.addView(constructVerticalBar{ v -> brake = v }, pedalParams)
+    // space
+    container.addView(Space(this), LinearLayout.LayoutParams(150, MATCH_PARENT, 0.0f))
     // Gas
     container.addView(constructVerticalBar{ v -> gas = v }, pedalParams)
+    container.addView(Space(this), LinearLayout.LayoutParams(300, MATCH_PARENT, 0.0f))
 
+//    container.addView(Space(this), LinearLayout.LayoutParams(5, MATCH_PARENT, 1.0f))
     addContentView(container, ConstraintLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
   }
 
@@ -204,15 +215,14 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
     val button = Button(this)
     button.text = (buttId + 1).toString()
     button.setBackgroundColor(Color.GRAY)
-    button.setOnTouchListener { _, event: MotionEvent ->
+    button.setOnClickListener{ _ ->
+      Log.i("button onClick", "button $buttId clicked")
+      btns[buttId] = 1
       GlobalScope.launch {
-        if (event.action == MotionEvent.ACTION_DOWN) {
-          btns[buttId] = 1
-        } else if (event.action == MotionEvent.ACTION_UP) {
-          btns[buttId] = 0
-        }
+        // release only after a delay to make sure at least one sampling catches the click
+        delay(SAMPLING_INTERVAL)
+        btns[buttId] = 0
       }
-      true
     }
     return button
   }
@@ -243,7 +253,7 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
     }
     r = max(min(r, 150.0), -150.0)
     Log.d("accelToXRotation", "normalized rotation is $r")
-    return r.toShort()
+    return r.toInt().toShort()
   }
 
   /** Lifecycle functions **/
@@ -268,9 +278,9 @@ class MainActivity(private var btns: Array<Int> = Array(24, fun (_): Int { retur
     setImmersiveFullscreen()
     window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
       if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-          Handler().postDelayed({
-            setImmersiveFullscreen()
-          }, 1000)
+        Handler().postDelayed({
+          setImmersiveFullscreen()
+        }, 1000)
       }
     }
   }
