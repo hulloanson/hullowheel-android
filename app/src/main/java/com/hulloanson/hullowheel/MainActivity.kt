@@ -10,6 +10,7 @@ import android.hardware.SensorManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.preference.PreferenceManager
 import android.util.Log
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
@@ -19,6 +20,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.Space
 import com.bosphere.verticalslider.VerticalSlider
@@ -182,8 +184,10 @@ class MainActivity(
   }
 
   private fun constructView() {
-    val container = LinearLayout(this)
-    container.orientation = LinearLayout.HORIZONTAL
+    val container = GridLayout(this)
+    container.orientation = GridLayout.HORIZONTAL
+    container.columnCount = PreferenceManager.getDefaultSharedPreferences(this).getInt("columnCount", 6)
+    container.rowCount = PreferenceManager.getDefaultSharedPreferences(this).getInt("rowCount", 5)
 
 //    container.addView(Space(this), LinearLayout.LayoutParams(100, MATCH_PARENT, 1.0f))
     val buttonPadParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1.0f)

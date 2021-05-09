@@ -1,5 +1,9 @@
 package com.hulloanson.hullowheel
 
+import android.content.SharedPreferences
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -27,4 +31,17 @@ fun parsePort(address: String): Int {
 
 fun matches(address: String): Boolean {
     return addressPattern.matcher(address).matches()
+}
+
+fun getProfiles(pref: SharedPreferences): UIProfiles {
+    val prefStr = pref.getString("profiles", null) ?: return UIProfiles(HashMap())
+    return Json.decodeFromString(prefStr)
+}
+
+fun getCurrentProfileName(pref: SharedPreferences) {
+    // TODO: implement
+}
+
+fun generateDefaultProfile() {
+    // TODO: implement
 }
