@@ -36,10 +36,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 import java.util.zip.GZIPOutputStream
-import kotlin.math.atan2
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.*
+
+const val BTN_CNT = 24
 
 object Sender {
   private lateinit var sock: DatagramSocket
@@ -60,17 +59,46 @@ object Sender {
       throw e
     }
   }
+
+}
+
+object State {
+  var wheel: Short = 0
+
+  var gas: Byte = 0
+
+  var brake: Byte = 0
+
+  var btns: Array<Int> = Array(BTN_CNT, fun (_): Int { return 0 })
+
+  fun packStates(): ByteArray {
+    val buf = ByteBuffer.allocate(
+            Short.SIZE_BYTES // wheel
+                    + Byte.SIZE_BYTES * 2 // gas and brake
+                    + ceil(BTN_CNT / 8.0).toInt() // 1 button consumes 1 bit
+    )
+    buf.order(ByteOrder.LITTLE_ENDIAN)
+    buf.putShort(0, wheel)
+    buf.put(2, gas)
+    buf.put(3, brake)
+    var btnOffset = 0
+    while (btnOffset < 3) {
+      var i = 0
+      var n = 0
+      while (i < 8) {
+        n = n or (btns[btnOffset * 8 + i] shl i)
+        i++
+      }
+      buf.put(4 + btnOffset, n.toByte())
+      btnOffset++
+    }
+    return buf.array()
+  }
 }
 
 class MainActivity(
-        private var btns: Array<Int> = Array(24, fun (_): Int { return 0 }), private var btnsAutoRelease: Array<UUID?> = Array(24, fun(_): UUID? { return null }))
+        private var btnsAutoRelease: Array<UUID?> = Array(BTN_CNT, fun(_): UUID? { return null }))
   : AppCompatActivity(), SensorEventListener {
-  private var wheel: Short = 0
-
-  private var gas: Byte = 0
-
-  private var brake: Byte = 0
-
   private lateinit var sensorManager: SensorManager
 
   private lateinit var sensor: Sensor
@@ -91,35 +119,12 @@ class MainActivity(
     return InetAddress.getByName(address)
   }
 
-  private fun packStates(): ByteArray {
-    val buf = ByteBuffer.allocate(
-            Short.SIZE_BYTES // wheel
-                    + Byte.SIZE_BYTES * 2 // gas and brake
-                    + 3 // 24 bits / 8
-    )
-    buf.order(ByteOrder.LITTLE_ENDIAN)
-    buf.putShort(0, wheel)
-    buf.put(2, gas)
-    buf.put(3, brake)
-    var btnOffset = 0
-    while (btnOffset < 3) {
-      var i = 0
-      var n = 0
-      while (i < 8) {
-        n = n or (btns[btnOffset * 8 + i] shl i)
-        i++
-      }
-      buf.put(4 + btnOffset, n.toByte())
-      btnOffset++
-    }
-    return buf.array()
-  }
 
   private fun startSending(): Job {
     return GlobalScope.launch {
       while (send) {
         try {
-          Sender.send(packStates(), getInetAddress())
+          Sender.send(State.packStates(), getInetAddress())
         } catch (e: IOException) {
           continue
         }
@@ -196,11 +201,11 @@ class MainActivity(
     container.addView(Space(this), LinearLayout.LayoutParams(50, MATCH_PARENT, 0.0f))
     val pedalParams = LinearLayout.LayoutParams(200, MATCH_PARENT, 0.0f)
     // Brake
-    container.addView(constructVerticalBar{ v -> brake = v }, pedalParams)
+    container.addView(constructVerticalBar{ v -> State.brake = v }, pedalParams)
     // space
     container.addView(Space(this), LinearLayout.LayoutParams(150, MATCH_PARENT, 0.0f))
     // Gas
-    container.addView(constructVerticalBar{ v -> gas = v }, pedalParams)
+    container.addView(constructVerticalBar{ v -> State.gas = v }, pedalParams)
     container.addView(Space(this), LinearLayout.LayoutParams(300, MATCH_PARENT, 0.0f))
 
 //    container.addView(Space(this), LinearLayout.LayoutParams(5, MATCH_PARENT, 1.0f))
@@ -221,11 +226,11 @@ class MainActivity(
     button.setBackgroundColor(Color.GRAY)
     button.setOnClickListener{ _ ->
       Log.i("button onClick", "button $buttId clicked")
-      btns[buttId] = 1
+      State.btns[buttId] = 1
       GlobalScope.launch {
         // release only after a delay to make sure at least one sampling catches the click
         delay(SAMPLING_INTERVAL)
-        btns[buttId] = 0
+        State.btns[buttId] = 0
       }
     }
     return button
@@ -308,7 +313,7 @@ class MainActivity(
     val x = e.values?.get(0)
     val y = e.values?.get(1)
     if (x == null || y == null) return
-    wheel = accelToXRotation(x, y)
+    State.wheel = accelToXRotation(x, y)
   }
 
   /** Sensor callbacks end **/
