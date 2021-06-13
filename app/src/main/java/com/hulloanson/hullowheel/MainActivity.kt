@@ -25,9 +25,6 @@ import android.widget.LinearLayout
 import android.widget.Space
 import com.bosphere.verticalslider.VerticalSlider
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.lang.Exception
 import java.lang.Math.PI
@@ -35,7 +32,6 @@ import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
-import java.util.zip.GZIPOutputStream
 import kotlin.math.*
 
 const val BTN_CNT = 24
@@ -96,18 +92,12 @@ object State {
   }
 }
 
-class MainActivity(
-        private var btnsAutoRelease: Array<UUID?> = Array(BTN_CNT, fun(_): UUID? { return null }))
-  : AppCompatActivity(), SensorEventListener {
+class MainActivity() : AppCompatActivity(), SensorEventListener {
   private lateinit var sensorManager: SensorManager
 
   private lateinit var sensor: Sensor
 
   private var send = true
-
-  private val ROW_COUNT = 4
-
-  private val COL_COUNT = 6
 
   private val SAMPLING_INTERVAL : Long = 50 // ms
 
@@ -118,7 +108,6 @@ class MainActivity(
   private fun getInetAddress(): InetAddress {
     return InetAddress.getByName(address)
   }
-
 
   private fun startSending(): Job {
     return GlobalScope.launch {
@@ -151,13 +140,13 @@ class MainActivity(
   private fun constructButtonPad(): LinearLayout {
     val container = LinearLayout(this)
     container.orientation = LinearLayout.VERTICAL
-    val ids = IntArray(ROW_COUNT)
-    for (i in 0 until ROW_COUNT) {
+    val ids = IntArray(rowCount)
+    for (i in 0 until rowCount) {
       val row = makeRow()
       row.id = ViewCompat.generateViewId()
       ids[i] = row.id
 
-      for (j in 0 until COL_COUNT) {
+      for (j in 0 until colCount) {
         val button = makeButton(i, j)
         val params = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1.0f)
         row.addView(button, params)
@@ -194,22 +183,6 @@ class MainActivity(
     container.columnCount = PreferenceManager.getDefaultSharedPreferences(this).getInt("columnCount", 6)
     container.rowCount = PreferenceManager.getDefaultSharedPreferences(this).getInt("rowCount", 5)
 
-//    container.addView(Space(this), LinearLayout.LayoutParams(100, MATCH_PARENT, 1.0f))
-    val buttonPadParams = LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1.0f)
-    container.addView(constructButtonPad(), buttonPadParams)
-
-    container.addView(Space(this), LinearLayout.LayoutParams(50, MATCH_PARENT, 0.0f))
-    val pedalParams = LinearLayout.LayoutParams(200, MATCH_PARENT, 0.0f)
-    // Brake
-    container.addView(constructVerticalBar{ v -> State.brake = v }, pedalParams)
-    // space
-    container.addView(Space(this), LinearLayout.LayoutParams(150, MATCH_PARENT, 0.0f))
-    // Gas
-    container.addView(constructVerticalBar{ v -> State.gas = v }, pedalParams)
-    container.addView(Space(this), LinearLayout.LayoutParams(300, MATCH_PARENT, 0.0f))
-
-//    container.addView(Space(this), LinearLayout.LayoutParams(5, MATCH_PARENT, 1.0f))
-    addContentView(container, ConstraintLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
   }
 
   private fun makeRow(): LinearLayout {
@@ -220,7 +193,7 @@ class MainActivity(
 
   @SuppressLint("ClickableViewAccessibility")
   private fun makeButton(row: Int, col: Int): Button {
-    val buttId = row * COL_COUNT + col
+    val buttId = row * colCount + col
     val button = Button(this)
     button.text = (buttId + 1).toString()
     button.setBackgroundColor(Color.GRAY)
