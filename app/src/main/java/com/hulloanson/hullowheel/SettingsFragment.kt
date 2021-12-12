@@ -7,6 +7,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SeekBarPreference
+import java.util.logging.Logger
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -22,6 +24,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
         val addressPref = findPreference<EditTextPreference>("address")
+      println("Current address pref obj: $addressPref")
+        addressPref?.summary = "Current: ${addressPref?.text}"
         addressPref?.setOnPreferenceChangeListener { _, newValue ->
             val valid = matches(newValue as String)
             if (!valid) {
@@ -33,10 +37,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
                             Toast.LENGTH_LONG
                     ).show()
                 }
+            } else {
+              addressPref.summary = "Current: $newValue"
             }
             valid
         }
-        val turnThresHoldPref = findPreference<EditTextPreference>("turnThreshold")
+        val turnThresholdPref = findPreference<SeekBarPreference>("turn_threshold")
+      println("Current turnThreshold pref obj: $turnThresholdPref")
+      println("Current turnThreshold value: ${turnThresholdPref?.value}")
+        turnThresholdPref?.summary = "Current: ${turnThresholdPref?.value}"
+        turnThresholdPref?.setOnPreferenceChangeListener { _, newValue ->
+//            Handler().post {
+                turnThresholdPref.value = newValue as Int
+                turnThresholdPref.summary = "Current: $newValue"
+//            }
+          true
+        }
     }
     /**
      * Called during [.onCreate] to supply the preferences for this fragment.

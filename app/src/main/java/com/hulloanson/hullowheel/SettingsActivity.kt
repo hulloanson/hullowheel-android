@@ -33,9 +33,11 @@ class SettingsActivity : AppCompatActivity() {
                     ?: throw NullPointerException("unexpected: address is null")
             val address = parseHost(addressStr)
             val port = parsePort(addressStr)
+            val turnThreshold = PreferenceManager.getDefaultSharedPreferences(this).getInt("turn_threshold", 3)
             startActivity(Intent(this, MainActivity::class.java).apply {
                 putExtra("address", address)
                 putExtra("port", port)
+                putExtra("turnThreshold", turnThreshold)
             })
         }
         return false

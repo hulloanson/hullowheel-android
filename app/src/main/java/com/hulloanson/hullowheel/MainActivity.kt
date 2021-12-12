@@ -265,6 +265,7 @@ class MainActivity(
     super.onCreate(savedInstanceState)
     address = intent.getStringExtra("address")
     port = intent.getIntExtra("port", 0)
+    wheelTurnThreshold = intent.getIntExtra("turnThreshold", 3)
     setContentView(R.layout.activity_main)
     constructView()
   }
@@ -309,7 +310,10 @@ class MainActivity(
     if (x == null || y == null) return
     val newVal = accelToXRotation(x, y)
     if (kotlin.math.abs(newVal - wheel) >= wheelTurnThreshold) {
+      println("exceeded threshold. new value: $newVal")
       wheel = newVal
+    } else {
+      println("have not exceeded threshold. keeping old value of $wheel")
     }
   }
 

@@ -6,4 +6,12 @@
         app:summary="Current: 192.168.43.66:20000"
         android:defaultValue="192.168.43.66:20000"
         />
+    <SeekBarPreference
+        app:key="turn_threshold"
+        app:title="Minimum threshold for wheel to turn, in degrees"
+        app:summary="Current: 3"
+        app:min="0"
+        android:max="200"
+        app:defaultValue="30"
+    />
 </PreferenceScreen>
