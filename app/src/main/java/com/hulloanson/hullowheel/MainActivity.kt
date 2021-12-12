@@ -23,9 +23,6 @@ import android.widget.LinearLayout
 import android.widget.Space
 import com.bosphere.verticalslider.VerticalSlider
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.lang.Exception
 import java.lang.Math.PI
@@ -33,9 +30,7 @@ import java.net.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
-import java.util.zip.GZIPOutputStream
 import kotlin.math.atan2
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -166,6 +161,10 @@ class MainActivity(
     container.orientation = LinearLayout.VERTICAL
     val bar = VerticalSlider(this)
     bar.rotation = 180.0f
+    val thickness = 100
+    bar.setThumbRadiusPx((thickness * 1.2).toInt())
+    bar.setTrackBgThicknessPx(thickness)
+    bar.setTrackFgThicknessPx(thickness)
     bar.setOnSliderProgressChangeListener { progress -> setValue((progress * 120).toByte()) }
     bar.setOnTouchListener { _, motionEvent ->
       if (motionEvent.action == MotionEvent.ACTION_UP) {
@@ -190,14 +189,14 @@ class MainActivity(
     container.addView(constructButtonPad(), buttonPadParams)
 
     container.addView(Space(this), LinearLayout.LayoutParams(50, MATCH_PARENT, 0.0f))
-    val pedalParams = LinearLayout.LayoutParams(200, MATCH_PARENT, 0.0f)
+    val pedalParams = LinearLayout.LayoutParams(300, MATCH_PARENT, 0.0f)
     // Brake
     container.addView(constructVerticalBar{ v -> brake = v }, pedalParams)
     // space
-    container.addView(Space(this), LinearLayout.LayoutParams(150, MATCH_PARENT, 0.0f))
+//    container.addView(Space(this), LinearLayout.LayoutParams(100, MATCH_PARENT, 0.0f))
     // Gas
     container.addView(constructVerticalBar{ v -> gas = v }, pedalParams)
-    container.addView(Space(this), LinearLayout.LayoutParams(300, MATCH_PARENT, 0.0f))
+    container.addView(Space(this), LinearLayout.LayoutParams(350, MATCH_PARENT, 0.0f))
 
 //    container.addView(Space(this), LinearLayout.LayoutParams(5, MATCH_PARENT, 1.0f))
     addContentView(container, ConstraintLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
