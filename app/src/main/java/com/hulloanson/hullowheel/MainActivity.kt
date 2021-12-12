@@ -214,14 +214,13 @@ class MainActivity(
     val button = Button(this)
     button.text = (buttId + 1).toString()
     button.setBackgroundColor(Color.GRAY)
-    button.setOnClickListener{ _ ->
-      Log.i("button onClick", "button $buttId clicked")
-      btns[buttId] = 1
-      GlobalScope.launch {
-        // release only after a delay to make sure at least one sampling catches the click
-        delay(SAMPLING_INTERVAL)
+    button.setOnTouchListener { _, event ->
+      if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
+        btns[buttId] = 1
+      } else {
         btns[buttId] = 0
       }
+      true
     }
     return button
   }
