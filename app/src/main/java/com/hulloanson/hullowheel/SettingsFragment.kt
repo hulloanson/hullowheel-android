@@ -36,6 +36,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
             valid
         }
+        val turnThresHoldPref = findPreference<EditTextPreference>("turnThreshold")
     }
     /**
      * Called during [.onCreate] to supply the preferences for this fragment.

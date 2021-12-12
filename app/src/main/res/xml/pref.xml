@@ -2,8 +2,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <EditTextPreference
         app:key="address"
-        app:title="Set the HulloWheel server address"
-        app:summary="e.g. 192.168.43.66:20000"
+        app:title="HulloWheel server address"
+        app:summary="Current: 192.168.43.66:20000"
         android:defaultValue="192.168.43.66:20000"
         />
 </PreferenceScreen>

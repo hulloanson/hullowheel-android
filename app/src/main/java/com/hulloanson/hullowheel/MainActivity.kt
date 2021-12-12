@@ -80,6 +80,8 @@ class MainActivity(
 
   private var port: Int = 0
 
+  private var wheelTurnThreshold = 0 // deg
+
   private fun getInetAddress(): InetAddress {
     return InetAddress.getByName(address)
   }
@@ -171,6 +173,8 @@ class MainActivity(
         bar.setProgress(0.0f)
         setValue(0)
       }
+      println("motionEvent.x: ${motionEvent.x}")
+      println("motionEvent.y: ${motionEvent.y}")
       false
     }
     val barParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 1.0f)
@@ -303,7 +307,10 @@ class MainActivity(
     val x = e.values?.get(0)
     val y = e.values?.get(1)
     if (x == null || y == null) return
-    wheel = accelToXRotation(x, y)
+    val newVal = accelToXRotation(x, y)
+    if (kotlin.math.abs(newVal - wheel) >= wheelTurnThreshold) {
+      wheel = newVal
+    }
   }
 
   /** Sensor callbacks end **/
